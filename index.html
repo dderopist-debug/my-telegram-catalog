@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <title>Мой каталог</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: var(--tg-theme-bg-color, #101116);
+      color: var(--tg-theme-text-color, #ffffff);
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      margin: 10px 0 22px;
+    }
+
+    .header h1 {
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: var(--tg-theme-hint-color, #999999);
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      border: 1px solid #343640;
+      border-radius: 14px;
+      background: var(--tg-theme-secondary-bg-color, #202127);
+      color: var(--tg-theme-text-color, white);
+      font-size: 16px;
+      outline: none;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      min-width: 0;
+      padding: 15px;
+      border: 1px solid #30323d;
+      border-radius: 18px;
+      background: var(--tg-theme-secondary-bg-color, #1b1c23);
+    }
+
+    .avatar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 85px;
+      margin-bottom: 12px;
+      border-radius: 13px;
+      background: #292b38;
+      font-size: 34px;
+    }
+
+    .card h3 {
+      font-size: 16px;
+      margin: 0 0 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .description {
+      min-height: 34px;
+      color: var(--tg-theme-hint-color, #999999);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .price {
+      font-size: 14px;
+      font-weight: bold;
+      margin: 12px 0;
+    }
+
+    .buy {
+      width: 100%;
+      padding: 12px 5px;
+      border: none;
+      border-radius: 11px;
+      background: var(--tg-theme-button-color, #6c5ce7);
+      color: var(--tg-theme-button-text-color, #ffffff);
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .notice {
+      margin-top: 24px;
+      color: var(--tg-theme-hint-color, #999999);
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .empty {
+      display: none;
+      grid-column: 1 / -1;
+      padding: 25px 0;
+      text-align: center;
+      color: var(--tg-theme-hint-color, #999999);
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <h1>✨ Мой каталог</h1>
+    <div class="subtitle">
+      Найди нужную карточку в несколько нажатий
+    </div>
+  </header>
+
+  <input
+    id="search"
+    type="search"
+    placeholder="🔎 Поиск по каталогу..."
+    autocomplete="off"
+  >
+
+  <h2 class="section-title">Популярное</h2>
+
+  <main class="catalog" id="catalog">
+    <article class="card" data-search="пример первая карточка">
+      <div class="avatar">📁</div>
+      <h3>Пример карточки №1</h3>
+      <div class="description">
+        Демонстрационная запись каталога
+      </div>
+      <div class="price">50 ⭐ Stars</div>
+      <button class="buy" data-name="Пример карточки №1">
+        Подробнее
+      </button>
+    </article>
+
+    <article class="card" data-search="пример вторая карточка">
+      <div class="avatar">🔐</div>
+      <h3>Пример карточки №2</h3>
+      <div class="description">
+        Доступ после подтверждения оплаты
+      </div>
+      <div class="price">50 ⭐ Stars</div>
+      <button class="buy" data-name="Пример карточки №2">
+        Подробнее
+      </button>
+    </article>
+
+    <div class="empty" id="empty">
+      Ничего не найдено
+    </div>
+  </main>
+
+  <p class="notice">
+    Демонстрационный каталог. Кнопки пока не проводят оплату.
+    Оплата будет подключена через Telegram-бота.
+  </p>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    const search = document.getElementById("search");
+    const cards = [...document.querySelectorAll(".card")];
+    const empty = document.getElementById("empty");
+
+    search.addEventListener("input", () => {
+      const query = search.value.toLowerCase().trim();
+      let visible = 0;
+
+      cards.forEach(card => {
+        const text = (
+          card.dataset.search + " " + card.innerText
+        ).toLowerCase();
+
+        const match = text.includes(query);
+        card.style.display = match ? "" : "none";
+
+        if (match) visible++;
+      });
+
+      empty.style.display = visible ? "none" : "block";
+    });
+
+    document.querySelectorAll(".buy").forEach(button => {
+      button.addEventListener("click", () => {
+        const message =
+          "Карточка: " + button.dataset.name +
+          "\n\nПодключение оплаты за 50 Stars — следующий этап.";
+
+        if (tg) {
+          tg.showAlert(message);
+        } else {
+          alert(message);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
